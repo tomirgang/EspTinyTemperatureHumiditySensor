@@ -6,6 +6,8 @@
 #include <data_helper.h>
 #include <wifi_helper.h>
 #include <sensor_ntp.h>
+#include <sensor_udp.h>
+#include <sensor_webserver.h>
 
 #define PIN_DHT22 2
 #define DHT_TYPE DHT22
@@ -52,6 +54,8 @@ void setup()
         init_ntp();
         ntp_setup = true;
         delay(5000);
+
+        init_webserver();
     }
 }
 
@@ -68,6 +72,8 @@ void loop()
         {
             init_ntp();
             delay(5000);
+
+            init_webserver();
         }
     }
 
@@ -76,15 +82,12 @@ void loop()
 
     print_data_to_serial(!day_update);
 
-    // TODO: broadcast data to UDP
-
-    // TODO: webserver
-
     time_t now;
     do
-    {
+    {   
+        handle_client();
         time(&now);
-        delay(200);
+        delay(100);
     } while (now < (last_measurement + SLEEP_TIME));
 }
 
@@ -92,5 +95,8 @@ bool read_sensor_values(void)
 {
     float humidity = dht.readHumidity();
     float temperature = dht.readTemperature();
+
+    udp_send_data(humidity, temperature);
+
     return add_values(humidity, temperature);
 }
